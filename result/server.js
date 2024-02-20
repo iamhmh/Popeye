@@ -9,9 +9,16 @@ var express = require('express'),
     server = require('http').Server(app),
     io = require('socket.io')(server);
 
+const { Pool } = require('pg'); 
+
 io.set('transports', ['polling']);
 
 var port = 80;
+
+const pool = new Pool({
+  connectionString: 'postgres://postgres:password@db/postgres',
+});
+
 
 io.sockets.on('connection', function (socket) {
 
@@ -23,14 +30,14 @@ io.sockets.on('connection', function (socket) {
 });
 
 async.retry(
-  {times: 1000, interval: 1000},
+  { times: 1000, interval: 1000 },
   function(callback) {
-      pg.connect('postgres://postgres:password@db/postgres', function(err, client, done) {
-          if (err) {
-              console.error("Waiting for db");
-          }
-          callback(err, client);
-      });
+    pool.connect(function(err, client, done) {
+      if (err) {
+        console.error("Waiting for db");
+      }
+      callback(err, client);
+    });
   },
   function(err, client) {
     if (err) {
